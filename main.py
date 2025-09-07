@@ -1,7 +1,7 @@
 import requests
 import os
 import json
-from datetime import datetime
+from datetime import datetime,timedelta
 from dotenv import load_dotenv 
 
 load_dotenv()
@@ -44,3 +44,11 @@ def weather_data():
 forecast = weather_data()
 
 print(json.dumps(forecast, indent=4))
+
+default_args = {
+    "owner": "airflow",
+    "depends_on_past": False,
+    "start_date": datetime(2025, 9, 7), 
+    "retries": 1,
+    "retry_delay": timedelta(minutes=5),
+}
