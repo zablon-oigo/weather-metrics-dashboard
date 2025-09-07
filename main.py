@@ -15,6 +15,24 @@ def weather_data():
     if response.status_code == 200:
         data = response.json()
         forecasts = []
+        for entry in data.get("list", []):
+            forecast = {
+                "datetime": entry["dt_txt"],
+                "temp": entry["main"]["temp"],
+                "temp_min": entry["main"]["temp_min"],
+                "temp_max": entry["main"]["temp_max"],
+                "feels_like": entry["main"]["feels_like"],
+                "pressure": entry["main"]["pressure"],
+                "humidity": entry["main"]["humidity"],
+                "weather": {
+                    "main": entry["weather"][0]["main"],
+                    "description": entry["weather"][0]["description"],
+                    "icon": entry["weather"][0]["icon"]
+                },
+                "clouds": entry["clouds"]["all"],
+                "rain": entry.get("rain", {}).get("3h", 0)
+            }
+            forecasts.append(forecast)
         
         return {
             "city": data["city"],
