@@ -52,3 +52,10 @@ default_args = {
     "retries": 1,
     "retry_delay": timedelta(minutes=5),
 }
+with DAG(
+    dag_id="weather_forecast_dag",
+    default_args=default_args,
+    schedule_interval="0 */3 * * *",  
+    catchup=False,
+    tags=["weather", "api"],
+) as dag:
