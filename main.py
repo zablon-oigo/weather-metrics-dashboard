@@ -1,3 +1,5 @@
+from airflow import DAG
+from airflow.operators.python import PythonOperator
 import requests
 import os
 import json
@@ -59,3 +61,11 @@ with DAG(
     catchup=False,
     tags=["weather", "api"],
 ) as dag:
+    
+
+fetch_weather = PythonOperator(
+        task_id="fetch_weather",
+        python_callable=weather_data
+    )
+
+fetch_weather
