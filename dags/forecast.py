@@ -16,7 +16,13 @@ API_KEY = Variable.get("API_KEY")
 CITY = "Nairobi"
 BASE_URL = f"http://api.openweathermap.org/data/2.5/forecast?q={CITY}&appid={API_KEY}&units=metric"
 
-DUCKDB_PATH = os.getenv("DUCKDB_PATH", "/usr/local/airflow/data/weather.duckdb")
+MYSQL_CONFIG = {
+    "host": os.getenv("MYSQL_HOST", "mysql"),
+    "user": os.getenv("MYSQL_USER", "test"),
+    "password": os.getenv("MYSQL_PASSWORD", "pass"),
+    "database": os.getenv("MYSQL_DB", "testDB"),
+    "port": int(os.getenv("MYSQL_PORT", 3306)),
+}
 
 def weather_data():
     response = requests.get(BASE_URL)
