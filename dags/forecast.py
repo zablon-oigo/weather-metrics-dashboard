@@ -6,6 +6,11 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator
 from datetime import datetime, timedelta
 from airflow.models import Variable
+from airflow.decorators import dag, task
+from airflow.providers.apache.kafka.operators.produce import ProduceToTopicOperator
+from airflow.provider.apache.kafka.operators.consume import ConsumeFromTopicOperator
+
+KAFKA_TOPIC="forecast"
 
 API_KEY = Variable.get("API_KEY")
 CITY = "Nairobi"
