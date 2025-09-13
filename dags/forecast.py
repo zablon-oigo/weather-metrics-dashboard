@@ -37,13 +37,17 @@ MYSQL_CONFIG = {
     },
 )
 
-def weather_data():
-    response = requests.get(BASE_URL)
-    if response.status_code == 200:
+def weather_ingest_mysql_dag():
+
+    @task()
+    def fetch_weather():
+        response = requests.get(BASE_URL)
+        response.raise_for_status()
         data = response.json()
+
         forecasts = []
         for entry in data.get("list", []):
-            forecast = {
+            forecasts.append({
                 "datetime": entry["dt_txt"],
                 "temp": entry["main"]["temp"],
                 "temp_min": entry["main"]["temp_min"],
@@ -52,21 +56,15 @@ def weather_data():
                 "pressure": entry["main"]["pressure"],
                 "humidity": entry["main"]["humidity"],
                 "weather_main": entry["weather"][0]["main"],
-                "weather_description": entry["weather"][0]["description"],  
-                "weather_icon": entry["weather"][0]["icon"],                
+                "weather_description": entry["weather"][0]["description"],
+                "weather_icon": entry["weather"][0]["icon"],
                 "clouds": entry["clouds"]["all"],
                 "rain": entry.get("rain", {}).get("3h", 0),
-            }
-            forecasts.append(forecast)
+            })
 
-        result = {
+        return {
             "city": data["city"]["name"],
             "country": data["city"]["country"],
             "forecast": forecasts,
         }
-
-        print(json.dumps(result, indent=4))
-        return result
-    else:
-        raise Exception(f"Failed to fetch data. Status code: {response.status_code}")
 
