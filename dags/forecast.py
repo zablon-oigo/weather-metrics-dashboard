@@ -1,14 +1,12 @@
 import os
 import json
 import requests
-import duckdb
-from airflow import DAG
-from airflow.operators.python import PythonOperator
-from datetime import datetime, timedelta
-from airflow.models import Variable
+import pymysql
 from airflow.decorators import dag, task
+from airflow.models import Variable
 from airflow.providers.apache.kafka.operators.produce import ProduceToTopicOperator
-from airflow.provider.apache.kafka.operators.consume import ConsumeFromTopicOperator
+from airflow.providers.apache.kafka.operators.consume import ConsumeFromTopicOperator
+from datetime import datetime, timedelta
 
 KAFKA_TOPIC="forecast"
 
@@ -23,6 +21,21 @@ MYSQL_CONFIG = {
     "database": os.getenv("MYSQL_DB", "testDB"),
     "port": int(os.getenv("MYSQL_PORT", 3306)),
 }
+
+@dag(
+    dag_id="weather_ingest_mysql",
+    description="Fetch weather forecast",
+    schedule="0 */3 * * *", 
+    start_date=datetime(2025, 9, 1),
+    catchup=False,
+    tags=["weather", "kafka", "mysql"],
+    default_args={
+        "owner": "test",
+        "depends_on_past": False,
+        "retries": 1,
+        "retry_delay": timedelta(minutes=5),
+    },
+)
 
 def weather_data():
     response = requests.get(BASE_URL)
