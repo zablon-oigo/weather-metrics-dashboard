@@ -68,3 +68,11 @@ def weather_ingest_mysql_dag():
             "forecast": forecasts,
         }
 
+
+    produce_task = ProduceToTopicOperator(
+    task_id="produce_weather",
+    kafka_config_id="kafka_default", 
+    topic=KAFKA_TOPIC,
+    value="{{ ti.xcom_pull(task_ids='fetch_weather') | tojson }}",
+    )
+
