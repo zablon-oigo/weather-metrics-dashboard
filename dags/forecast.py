@@ -102,5 +102,30 @@ def save_to_mysql(message, **kwargs):
                 INDEX idx_datetime (datetime)
             )
         """)
+        for row in payload["forecast"]:
+            cursor.execute("""
+                INSERT INTO weather_forecast 
+                (datetime, temp, temp_min, temp_max, feels_like, pressure, humidity,
+                 weather_main, weather_description, weather_icon, clouds, rain, city, country)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                ON DUPLICATE KEY UPDATE
+                    temp=VALUES(temp),
+                    temp_min=VALUES(temp_min),
+                    temp_max=VALUES(temp_max),
+                    feels_like=VALUES(feels_like),
+                    pressure=VALUES(pressure),
+                    humidity=VALUES(humidity),
+                    weather_main=VALUES(weather_main),
+                    weather_description=VALUES(weather_description),
+                    weather_icon=VALUES(weather_icon),
+                    clouds=VALUES(clouds),
+                    rain=VALUES(rain),
+                    city=VALUES(city),
+                    country=VALUES(country)
+            """, (
+                row["datetime"], row["temp"], row["temp_min"], row["temp_max"], row["feels_like"],
+                row["pressure"], row["humidity"], row["weather_main"], row["weather_description"],
+                row["weather_icon"], row["clouds"], row["rain"], payload["city"], payload["country"]
+            ))
 
 
