@@ -76,3 +76,31 @@ def weather_ingest_mysql_dag():
     value="{{ ti.xcom_pull(task_ids='fetch_weather') | tojson }}",
     )
 
+def save_to_mysql(message, **kwargs):
+        payload = json.loads(message.value().decode("utf-8"))
+
+        conn = pymysql.connect(**MYSQL_CONFIG)
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS weather_forecast (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                datetime DATETIME UNIQUE,
+                temp FLOAT,
+                temp_min FLOAT,
+                temp_max FLOAT,
+                feels_like FLOAT,
+                pressure FLOAT,
+                humidity FLOAT,
+                weather_main VARCHAR(50),
+                weather_description VARCHAR(100),
+                weather_icon VARCHAR(10),
+                clouds FLOAT,
+                rain FLOAT,
+                city VARCHAR(50),
+                country VARCHAR(10),
+                INDEX idx_datetime (datetime)
+            )
+        """)
+
+
