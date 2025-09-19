@@ -139,3 +139,7 @@ def save_to_mysql(message, **kwargs):
         topics=[KAFKA_TOPIC],
         apply_function=save_to_mysql,
     )
+
+    weather = fetch_weather()
+    weather >> produce_task >> consume_task
+dag = weather_ingest_mysql_dag()
