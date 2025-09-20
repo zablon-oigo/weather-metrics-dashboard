@@ -133,13 +133,13 @@ def save_to_mysql(message, **kwargs):
         cursor.close()
         conn.close()
 
-    consume_task = ConsumeFromTopicOperator(
-        task_id="consume_weather",
-        kafka_config_id="kafka_default",
-        topics=[KAFKA_TOPIC],
-        apply_function=save_to_mysql,
-    )
+consume_task = ConsumeFromTopicOperator(
+    task_id="consume_weather",
+    kafka_config_id="kafka_default",
+    topics=[KAFKA_TOPIC],
+    apply_function=save_to_mysql,
+)
 
-    weather = fetch_weather()
-    weather >> produce_task >> consume_task
+weather = fetch_weather()
+weather >> produce_task >> consume_task
 dag = weather_ingest_mysql_dag()
