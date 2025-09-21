@@ -68,15 +68,7 @@ def weather_ingest_mysql_dag():
             "forecast": forecasts,
         }
 
-
-    produce_task = ProduceToTopicOperator(
-    task_id="produce_weather",
-    kafka_config_id="kafka_default", 
-    topic=KAFKA_TOPIC,
-    value="{{ ti.xcom_pull(task_ids='fetch_weather') | tojson }}",
-    )
-
-def save_to_mysql(message, **kwargs):
+    def save_to_mysql(message, **kwargs):
         payload = json.loads(message.value().decode("utf-8"))
 
         conn = pymysql.connect(**MYSQL_CONFIG)
@@ -128,18 +120,18 @@ def save_to_mysql(message, **kwargs):
                 row["weather_icon"], row["clouds"], row["rain"], payload["city"], payload["country"]
             ))
 
-
         conn.commit()
         cursor.close()
         conn.close()
 
-consume_task = ConsumeFromTopicOperator(
-    task_id="consume_weather",
-    kafka_config_id="kafka_default",
-    topics=[KAFKA_TOPIC],
-    apply_function=save_to_mysql,
-)
+    weather = fetch_weather()
 
+    produce_task = ProduceToTopicOperator(
+        task_id="produce_weather",
+        kafka_config_id="kafka_default",
+        topic=KAFKA_TOPIC,
+        value="{{ ti.xcom_pull(task_ids='fetch_weather') | tojson }}",
+    )
 weather = fetch_weather()
 weather >> produce_task >> consume_task
 dag = weather_ingest_mysql_dag()
