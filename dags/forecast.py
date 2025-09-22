@@ -67,71 +67,14 @@ def weather_ingest_mysql_dag():
             "country": data["city"]["country"],
             "forecast": forecasts,
         }
-
-    def save_to_mysql(message, **kwargs):
-        payload = json.loads(message.value().decode("utf-8"))
-
-        conn = pymysql.connect(**MYSQL_CONFIG)
-        cursor = conn.cursor()
-
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS weather_forecast (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                datetime DATETIME UNIQUE,
-                temp FLOAT,
-                temp_min FLOAT,
-                temp_max FLOAT,
-                feels_like FLOAT,
-                pressure FLOAT,
-                humidity FLOAT,
-                weather_main VARCHAR(50),
-                weather_description VARCHAR(100),
-                weather_icon VARCHAR(10),
-                clouds FLOAT,
-                rain FLOAT,
-                city VARCHAR(50),
-                country VARCHAR(10),
-                INDEX idx_datetime (datetime)
-            )
-        """)
-        for row in payload["forecast"]:
-            cursor.execute("""
-                INSERT INTO weather_forecast 
-                (datetime, temp, temp_min, temp_max, feels_like, pressure, humidity,
-                 weather_main, weather_description, weather_icon, clouds, rain, city, country)
-                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-                ON DUPLICATE KEY UPDATE
-                    temp=VALUES(temp),
-                    temp_min=VALUES(temp_min),
-                    temp_max=VALUES(temp_max),
-                    feels_like=VALUES(feels_like),
-                    pressure=VALUES(pressure),
-                    humidity=VALUES(humidity),
-                    weather_main=VALUES(weather_main),
-                    weather_description=VALUES(weather_description),
-                    weather_icon=VALUES(weather_icon),
-                    clouds=VALUES(clouds),
-                    rain=VALUES(rain),
-                    city=VALUES(city),
-                    country=VALUES(country)
-            """, (
-                row["datetime"], row["temp"], row["temp_min"], row["temp_max"], row["feels_like"],
-                row["pressure"], row["humidity"], row["weather_main"], row["weather_description"],
-                row["weather_icon"], row["clouds"], row["rain"], payload["city"], payload["country"]
-            ))
-
-        conn.commit()
-        cursor.close()
-        conn.close()
-
     weather = fetch_weather()
 
     produce_task = ProduceToTopicOperator(
-        task_id="produce_weather",
-        kafka_config_id="kafka_default",
-        topic=KAFKA_TOPIC,
-        value="{{ ti.xcom_pull(task_ids='fetch_weather') | tojson }}",
-    )
-weather = fetch_weather()
-weather >> produce_task >> consume_task
+            task_id="produce_weather",
+            kafka_config_id="kafka_default",
+            topic=KAFKA_TOPIC,
+            value="{{ ti.xcom_pull(task_ids='fetch_weather') | tojson }}",
+        )
+    weather = fetch_weather()
+    weather >> produce_task 
 dag = weather_ingest_mysql_dag()
