@@ -75,6 +75,13 @@ def weather_ingest_mysql_dag():
             topic=KAFKA_TOPIC,
             value="{{ ti.xcom_pull(task_ids='fetch_weather') | tojson }}",
         )
+    
+    consume_task = ConsumeFromTopicOperator(
+        task_id="consume_weather",
+        kafka_config_id="kafka_default",
+        topics=[KAFKA_TOPIC],
+        apply_function=save_to_mysql,
+    )
     weather = fetch_weather()
-    weather >> produce_task 
+    weather >> produce_task >> consume_task
 dag = weather_ingest_mysql_dag()
