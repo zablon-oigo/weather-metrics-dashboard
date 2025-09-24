@@ -39,4 +39,6 @@ typing-extensions==4.15.0
 tzdata==2025.2
 urllib3==2.5.0
 watchdog==6.0.0
-apache-airflow-providers-apache-kafka=1.0.0
+apache-airflow-providers-apache-kafka==1.6.0
+
+astro-run-dag # This package is needed for the astro run command. It will be removed before a deploy
