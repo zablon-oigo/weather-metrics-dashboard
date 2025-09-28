@@ -1,19 +1,22 @@
-import pandas as pd
-
+from dagster_duckdb import DuckDBResource
 import dagster as dg
 
-sample_data_file = "src/weather_metrics_dashboard/defs/data/sample_data.csv"
-processed_data_file = "src/weather_metrics_dashboard//defs/data/processed_data.csv"
 
 
-@dg.asset
-def processed_data():
 
-    df = pd.read_csv(sample_data_file)
 
-    df["age_group"] = pd.cut(
-        df["age"], bins=[0, 30, 40, 100], labels=["Young", "Middle", "Senior"]
+@dg.asset_check(asset="orders_aggregation")
+def orders_aggregation_check(duckdb: DuckDBResource) -> dg.AssetCheckResult:
+    table_name = "orders_aggregation"
+    with duckdb.get_connection() as conn:
+        row_count = conn.execute(f"select count(*) from {table_name}").fetchone()[0]
+
+    if row_count == 0:
+        return dg.AssetCheckResult(
+            passed=False, metadata={"message": "Order aggregation check failed"}
+        )
+
+    return dg.AssetCheckResult(
+        passed=True, metadata={"message": "Order aggregation check passed"}
     )
 
-    df.to_csv(processed_data_file, index=False)
-    return "Data loaded successfully"
