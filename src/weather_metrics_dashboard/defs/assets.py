@@ -2,21 +2,20 @@ from dagster_duckdb import DuckDBResource
 import dagster as dg
 
 
+@dlt.source
+def open_weather_source(start_date: str, end_date: str, api_key: str):
+    @dlt.resource
+    def fetch_weather_data():
+        url = ""
+        params = {
+            "start_date": start_date,
+            "end_date": end_date,
+            "api_key": api_key,
+        }
 
+        response = requests.get(url, params=params)
+        response.raise_for_status()
 
+        data = response.json()
 
-@dg.asset_check(asset="orders_aggregation")
-def orders_aggregation_check(duckdb: DuckDBResource) -> dg.AssetCheckResult:
-    table_name = "orders_aggregation"
-    with duckdb.get_connection() as conn:
-        row_count = conn.execute(f"select count(*) from {table_name}").fetchone()[0]
-
-    if row_count == 0:
-        return dg.AssetCheckResult(
-            passed=False, metadata={"message": "Order aggregation check failed"}
-        )
-
-    return dg.AssetCheckResult(
-        passed=True, metadata={"message": "Order aggregation check passed"}
-    )
-
+    return fetch_weather_data
