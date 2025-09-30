@@ -1,6 +1,10 @@
 from dagster_duckdb import DuckDBResource
 import dagster as dg
+import os
+from dotenv import load_dotenv
+import dlt
 
+load_dotenv()
 
 @dlt.source
 def open_weather_source(start_date: str, end_date: str, api_key: str):
@@ -10,12 +14,18 @@ def open_weather_source(start_date: str, end_date: str, api_key: str):
         params = {
             "start_date": start_date,
             "end_date": end_date,
-            "api_key": api_key,
+            "api_key": os.getenv("API_KEY"),
         }
 
         response = requests.get(url, params=params)
         response.raise_for_status()
 
         data = response.json()
+
+    pipeline=dlt.pipeline(
+        pipeline_name="weather_pipeline",
+        destination=dlt.destinations.duckdb(os.getenv("DUCKDB_DATABASE")),
+        dataset_name="weather"
+    )
 
     return fetch_weather_data
