@@ -22,10 +22,9 @@ def open_weather_source(start_date: str, end_date: str, api_key: str):
 
         data = response.json()
 
-    pipeline=dlt.pipeline(
+    return fetch_weather_data
+pipeline=dlt.pipeline(
         pipeline_name="weather_pipeline",
         destination=dlt.destinations.duckdb(os.getenv("DUCKDB_DATABASE")),
         dataset_name="weather"
     )
-
-    return fetch_weather_data
