@@ -1,26 +1,29 @@
-from dagster_duckdb import DuckDBResource
-import dagster as dg
 import os
-from dotenv import load_dotenv
+import requests
 import dlt
+from dotenv import load_dotenv
 
 load_dotenv()
 
 @dlt.source
-def open_weather_source(start_date: str, end_date: str, api_key: str):
+def open_weather_source(city: str, api_key: str):
     @dlt.resource
     def fetch_weather_data():
-        url = ""
+        """
+        Fetch current or forecast weather data from OpenWeather API
+        and yield normalized JSON records.
+        """
+        url = "https://api.openweathermap.org/data/2.5/forecast"
         params = {
-            "start_date": start_date,
-            "end_date": end_date,
-            "api_key": os.getenv("API_KEY"),
+            "q": city,
+            "appid": api_key,
+            "units": "metric"
         }
 
         response = requests.get(url, params=params)
         response.raise_for_status()
-
         data = response.json()
+
         for entry in data["list"]:
             yield {
                 "timestamp": entry["dt_txt"],
@@ -34,8 +37,18 @@ def open_weather_source(start_date: str, end_date: str, api_key: str):
             }
 
     return fetch_weather_data
-pipeline = dlt.pipeline(
-    pipeline_name="weather_pipeline",
-    destination=dlt.destinations.duckdb(os.getenv("DUCKDB_DATABASE", "weather.duckdb")),
-    dataset_name="weather"
-)
+
+if __name__ == "__main__":
+    pipeline = dlt.pipeline(
+        pipeline_name="weather_pipeline",
+        destination=dlt.destinations.duckdb(os.getenv("DUCKDB_DATABASE", "weather.duckdb")),
+        dataset_name="weather",
+    )
+    source = open_weather_source(
+        city=os.getenv("CITY", "Nairobi"),
+        api_key=os.getenv("API_KEY")
+    )
+
+    load_info = pipeline.run(source)
+
+    print(load_info)
